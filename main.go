@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/miftahulhidayati/rest-api-go2/controllers"
-	"github.com/miftahulhidayati/rest-api-go2/database"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	docs "github.com/miftahulhidayati/rest-api-go2/docs"
@@ -16,10 +16,19 @@ import (
 type DBConn struct{
 	DB *gorm.DB
 }
+func InitMysqlDB() *gorm.DB {
+	dsn := "root:@tcp(127.0.0.1:3306)/orders_db?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	db.AutoMigrate(Order{})
+	db.AutoMigrate(Item{})
+	return db
+}
 
 type Item struct {
 	gorm.Model
-	// ItemID      int    `json:"item_id"`
 	ItemCode    string 
 	Description string 
 	Quantity    int    
@@ -27,14 +36,20 @@ type Item struct {
 }
 type Order struct {
 	gorm.Model
-	// OrderID      int       `json:"order_id"`
 	CustomerName string    
 	OrderedAt    time.Time 
 	Items        []Item    
 }
-
+// @Tags Order
+// @Summary Create order
+// @Description Create order description
+// @Accept json
+// @Produce json
+// @Param orderId body Order true "Create Order"
+// @Success 200 {object} Order
+// @Router /orders [post]
 func (conn *DBConn) CreateOrder(c *gin.Context) {
-	var order models.Order
+	var order Order
 	var result gin.H
 
 	err := c.ShouldBindJSON(&order)
@@ -67,16 +82,16 @@ func (conn *DBConn) CreateOrder(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, result)
 }
-// @Summary Get all orders summery
+// @Tags Order
+// @Summary Get order
 // @Description Get all orders description
-// @Accept json
 // @Produce json
-// @Param orderId body Order true "Create Order"
-// @Success 200 {object} Order
-// @Router /orders [post]
+// @Success 200 {array} Order
+// @Param orderId path int true "Order ID"
+// @Router /orders/{orderId} [get]
 func (conn *DBConn) GetOrder(c *gin.Context) {
 	var (
-		order models.Order
+		order Order
 		result gin.H
 	)
 	id := c.Param("id")
@@ -95,10 +110,15 @@ func (conn *DBConn) GetOrder(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
-
+// @Tags Order
+// @Summary Get all orders 
+// @Description Get all orders description
+// @Produce json
+// @Success 200 {array} Order
+// @Router /orders [get]
 func (conn *DBConn) GetOrders(c *gin.Context) {
 	var (
-		orders []models.Order
+		orders []Order
 		result  gin.H
 	)
 
@@ -125,11 +145,18 @@ func (conn *DBConn) GetOrders(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
-
+// @Tags Order
+// @Summary Update orders 
+// @Description Update orders description
+// @Produce json
+// @Success 200 {array} Order
+// @Param orderId path int true "Order ID"
+// @Param order body Order true "Order"
+// @Router /orders/{orderId} [put]
 func (conn *DBConn) UpdateOrder(c *gin.Context) {
 	
 	id := c.Query("id")
-	var order models.Order
+	var order Order
 	var result gin.H
 	err := conn.DB.First(&order, id).Error
 	if err != nil {
@@ -169,10 +196,16 @@ func (conn *DBConn) UpdateOrder(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, result)
 }
-
+// @Tags Order
+// @Summary delete order
+// @Description delete order description
+// @Produce json
+// @Param orderId path int true "Order ID"
+// @Success 200  {string}  string    "Data deleted successfully"
+// @Router /orders/{orderId} [delete]
 func (conn *DBConn) DeleteOrder(c *gin.Context) {
 	var (
-		order models.Order
+		order Order
 		result gin.H
 	)
 	id := c.Param("id")
@@ -233,9 +266,10 @@ func (conn *DBConn) DeleteOrder(c *gin.Context) {
 func main() {
 	router := gin.Default()
 
-	db := database.InitMysqlDB()
+	db := InitMysqlDB()
 
-	DBConn := &controllers.DBConn{DB: db}
+	DBConn := &DBConn{DB: db}
+	
 	//Read All
 	router.GET("/orders", DBConn.GetOrders)
 	//Read One
@@ -246,7 +280,7 @@ func main() {
 	router.PUT("/orders/:id", DBConn.UpdateOrder)
 	//Delete
 	router.DELETE("/orders/:id", DBConn.DeleteOrder)
-	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.BasePath = ""
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	
 	router.Run(":8080")

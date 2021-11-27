@@ -1,0 +1,141 @@
+definitions:
+  main.Item:
+    properties:
+      description:
+        type: string
+      itemCode:
+        type: string
+      orderID:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  main.Order:
+    properties:
+      customerName:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/main.Item'
+        type: array
+      orderedAt:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: API Order
+  version: "1.0"
+paths:
+  /orders:
+    get:
+      description: Get all orders description
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Order'
+            type: array
+      summary: Get all orders
+      tags:
+      - Order
+    post:
+      consumes:
+      - application/json
+      description: Create order description
+      parameters:
+      - description: Create Order
+        in: body
+        name: orderId
+        required: true
+        schema:
+          $ref: '#/definitions/main.Order'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Order'
+      summary: Create order
+      tags:
+      - Order
+  /orders/{orderId}:
+    delete:
+      description: delete order description
+      parameters:
+      - description: Order ID
+        in: path
+        name: orderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Order'
+            type: array
+      summary: delete order
+      tags:
+      - Order
+    get:
+      description: Get all orders description
+      parameters:
+      - description: Order ID
+        in: path
+        name: orderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Order'
+            type: array
+      summary: Get order
+      tags:
+      - Order
+    put:
+      description: Update orders description
+      parameters:
+      - description: Order ID
+        in: path
+        name: orderId
+        required: true
+        type: integer
+      - description: Order
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/main.Order'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Order'
+            type: array
+      summary: Update orders
+      tags:
+      - Order
+swagger: "2.0"
